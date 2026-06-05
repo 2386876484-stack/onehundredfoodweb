@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title th:text="${food.name} + ' — 食物真相百科'">食物详情</title>
+<style>
+:root{--bg:#f7f4ef;--card:#fff;--t:#2c2416;--t2:#5c4e38;--t3:#8b7a62;--muted:#b5a68e;--red:#8b4513;--green:#2d5a27;--border:#e5dcd0;--tagbg:#f0ebe0;--r:12px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;font-size:16px;line-height:1.7;color:var(--t);background:var(--bg)}
+a{text-decoration:none;color:inherit}
+
+.nav{background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.nav-inner{max-width:1300px;margin:0 auto;padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:56px;gap:4px}
+.nav-logo{font-size:1rem;font-weight:700;color:var(--t);white-space:nowrap}
+.nav-links{display:flex;gap:2px;flex-wrap:wrap;justify-content:flex-end}
+.nav-links a{padding:6px 12px;border-radius:20px;font-size:0.82rem;color:var(--t2);transition:all 0.2s;white-space:nowrap}
+.nav-links a:hover{background:var(--red);color:#fff}
+.nav-search{display:flex;align-items:center;gap:0}
+.nav-search input{padding:7px 12px;font-size:0.85rem;border:1.5px solid var(--border);border-radius:20px 0 0 20px;background:var(--bg);color:var(--t);outline:none;width:140px}
+.nav-search input:focus{border-color:var(--red)}
+.nav-search button{padding:7px 14px;font-size:0.85rem;border:1.5px solid var(--red);border-left:none;border-radius:0 20px 20px 0;background:var(--red);color:#fff;cursor:pointer}
+
+.container{max-width:800px;margin:0 auto 48px;padding:0 20px}
+.back-row{padding:20px 0 8px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 20px;font-size:0.9rem;border:1px solid var(--border);border-radius:20px;background:var(--card);color:var(--t2);transition:all 0.2s}
+.back-btn:hover{border-color:var(--red);color:var(--red)}
+
+.detail-header{margin-bottom:28px}
+.detail-header h1{font-size:1.5rem;font-weight:700;color:var(--t);margin-bottom:8px}
+.detail-header .meta{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.detail-header .cat-tag{font-size:0.78rem;padding:2px 10px;border-radius:10px;background:var(--tagbg);color:var(--red);font-weight:500}
+.detail-header .tag{font-size:0.78rem;padding:2px 10px;border-radius:10px;font-weight:500}
+.detail-header .tag.fh{background:#fdf0ea;color:var(--red)}
+.detail-header .tag.wa{background:#e8f5e4;color:var(--green)}
+.detail-header .desc-text{font-size:0.9rem;color:var(--t3)}
+
+.myth-card{background:var(--card);border-radius:var(--r);padding:22px 20px;box-shadow:0 2px 6px rgba(0,0,0,0.04);margin-bottom:16px}
+.myth-card .myth-line{font-size:1.05rem;font-weight:600;color:var(--t);margin-bottom:10px}
+.myth-card .truth-line{font-size:0.95rem;color:var(--t2);line-height:1.7;margin-bottom:10px}
+.myth-card .summary-line{font-size:0.85rem;color:var(--t3);padding:8px 12px;background:#faf7f2;border-radius:6px;border-left:3px solid var(--green);margin-bottom:8px}
+.myth-card .source-line{font-size:0.78rem;color:var(--muted)}
+
+.fav-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;font-size:0.9rem;border:1.5px solid #f1c40f;border-radius:20px;background:#fff;color:#7d6608;cursor:pointer;transition:all 0.2s;margin-left:12px}.fav-btn:hover{background:#fef9e7}.fav-btn.active{background:#f1c40f;color:#fff;border-color:#f1c40f}
+.nav-user{display:flex;align-items:center;gap:8px;font-size:0.82rem}.nav-user span{color:var(--t3)}.nav-user a{color:var(--red);font-weight:500;padding:4px 10px;border-radius:12px}.nav-user a:hover{background:#fdf0ea}
+
+.footer{text-align:center;padding:20px 20px 48px;color:var(--muted);font-size:0.82rem}
+@media(max-width:768px){
+  .nav-inner{flex-direction:column;height:auto;padding:8px 12px;gap:6px}
+  .nav-links a{padding:5px 10px;font-size:0.75rem}
+  .container{padding:0 16px}.detail-header h1{font-size:1.3rem}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="/">食物真相百科</a>
+    <div class="nav-links">
+      <a href="/">🏠 首页</a>
+      <a th:each="c : ${categories}"
+         th:href="@{/category/{name}(name=${c})}"
+         th:text="${catEmoji.getOrDefault(c,'📂')} + ' ' + ${c}">分类</a>
+      <a href="/all-foods">📋 全部</a><a href="/recipes">🍳 菜谱</a><a href="/shopping">🛒买菜</a>
+    </div>
+    <div class="nav-user" sec:authorize="!isAuthenticated()"><a href="/login">登录</a></div>
+    <div class="nav-user" sec:authorize="isAuthenticated()">
+      <a href="/favorites">⭐</a><span sec:authentication="name">用户</span>
+      <form method="post" action="/logout" style="display:inline"><button type="submit" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:0.8rem">退出</button></form>
+    </div>
+    <form class="nav-search" action="/search" method="get">
+      <input type="text" name="q" placeholder="搜索食物...">
+      <button type="submit">🔍</button>
+    </form>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="back-row">
+    <a class="back-btn" th:href="@{/category/{name}(name=${food.category})}">← 返回 <span th:text="${food.category}">分类</span></a>
+  </div>
+
+  <div class="detail-header">
+    <h1 th:text="${foodEmoji} + ' ' + ${food.name}">食物名</h1>
+    <button class="fav-btn" id="favBtn" sec:authorize="isAuthenticated()" onclick="toggleFav()">☆ 收藏</button>
+    <div class="meta">
+      <span class="cat-tag" th:text="${food.category}">分类</span>
+      <span class="tag" th:class="${food.tag} == '伪健康' ? 'fh' : 'wa'"
+            th:text="${food.tag}">标签</span>
+      <span class="desc-text" th:text="${food.description}">简介</span>
+    </div>
+  </div>
+
+  <th:block th:if="${#lists.isEmpty(food.myths)}">
+    <p style="text-align:center;color:var(--t3);padding:40px">暂无收录的误区。</p>
+  </th:block>
+
+  <th:block th:each="m : ${food.myths}">
+    <div class="myth-card">
+      <div class="myth-line">❌ <span th:text="${m.myth}">误区</span></div>
+      <div class="truth-line">✅ <span th:text="${m.truth}">真相</span></div>
+      <div class="summary-line" th:text="${m.summary}">总结</div>
+      <div class="source-line" th:if="${m.source != null and !m.source.isEmpty()}"
+           th:text="'来源：' + ${m.source}">来源</div>
+    </div>
+  </th:block>
+
+</div>
+
+<footer class="footer">食物真相百科 · 用科学证据说话</footer>
+
+<script>
+var favBtn=document.getElementById("favBtn");
+function checkFav(){fetch("/favorite/check/food/[[${food.id}]]").then(function(r){return r.json()}).then(function(d){if(d.favorited){favBtn.textContent="★ 已收藏";favBtn.classList.add("active")}});}
+function toggleFav(){fetch("/favorite/toggle/food/[[${food.id}]]",{method:"POST"}).then(function(r){return r.json()}).then(function(d){if(d.favorited){favBtn.textContent="★ 已收藏";favBtn.classList.add("active")}else{favBtn.textContent="☆ 收藏";favBtn.classList.remove("active")}});}
+if(favBtn)checkFav();
+</script>
+</body>
+</html>

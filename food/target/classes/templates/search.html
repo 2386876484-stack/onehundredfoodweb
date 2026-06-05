@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title th:text="'搜索：' + ${query} + ' — 食物真相百科'">搜索结果</title>
+<style>
+:root{--bg:#f7f4ef;--card:#fff;--t:#2c2416;--t2:#5c4e38;--t3:#8b7a62;--muted:#b5a68e;--red:#8b4513;--green:#2d5a27;--border:#e5dcd0;--r:12px;--sh:0 2px 12px rgba(0,0,0,0.06)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;font-size:16px;line-height:1.7;color:var(--t);background:var(--bg)}
+a{text-decoration:none;color:inherit}
+
+.nav{background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.nav-inner{max-width:1300px;margin:0 auto;padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:56px;gap:8px}
+.nav-logo{font-size:1rem;font-weight:700;color:var(--t);white-space:nowrap}
+.nav-links{display:flex;gap:2px;flex-wrap:wrap;align-items:center}
+.nav-links a{padding:6px 12px;border-radius:20px;font-size:0.82rem;color:var(--t2);transition:all 0.2s;white-space:nowrap}
+.nav-links a:hover{background:var(--red);color:#fff}
+.nav-search{display:flex;align-items:center;gap:0}
+.nav-search input{padding:7px 12px;font-size:0.85rem;border:1.5px solid var(--border);border-radius:20px 0 0 20px;background:var(--bg);color:var(--t);outline:none;width:140px}
+.nav-search input:focus{border-color:var(--red)}
+.nav-search button{padding:7px 14px;font-size:0.85rem;border:1.5px solid var(--red);border-left:none;border-radius:0 20px 20px 0;background:var(--red);color:#fff;cursor:pointer}
+.nav-user{display:flex;align-items:center;gap:8px;font-size:0.82rem;margin-left:8px}
+.nav-user span{color:var(--t3)}.nav-user a{color:var(--red);font-weight:500;padding:4px 10px;border-radius:12px;white-space:nowrap}
+.nav-user a:hover{background:#fdf0ea}
+
+.page-header{padding:32px 20px 20px;max-width:800px;margin:0 auto}
+.page-header h1{font-size:1.4rem;font-weight:700;color:var(--t)}
+.page-header .count{font-size:0.9rem;color:var(--t3);margin-top:4px}
+
+.content{max-width:1200px;margin:0 auto 48px;padding:0 20px}
+.sec-title{font-size:1.05rem;font-weight:700;color:var(--t);margin:24px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--border)}
+
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.card{background:var(--card);border-radius:var(--r);padding:18px 16px;box-shadow:var(--sh);transition:all 0.2s;display:flex;flex-direction:column;gap:6px}
+.card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.12)}
+.card .c-top{display:flex;justify-content:space-between;align-items:flex-start}
+.card .c-emoji{font-size:1.3rem}
+.card .c-tag{font-size:0.7rem;padding:2px 8px;border-radius:6px;font-weight:500}
+.card .c-tag.fh{background:#fdf0ea;color:var(--red)}
+.card .c-tag.wa{background:#e8f5e4;color:var(--green)}
+.card .c-tag.recipe{background:#e3f2fd;color:#1565c0}
+.card .c-tag.shop{background:#e8f5e9;color:var(--green)}
+.card .c-name{font-size:1rem;font-weight:650;color:var(--t)}
+.card .c-desc{font-size:0.85rem;color:var(--t3);line-height:1.5;flex:1}
+.card .c-footer{font-size:0.78rem;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+.card .c-cta{color:var(--red);font-weight:600}
+
+.empty{padding:60px 20px;text-align:center;color:var(--t3);max-width:800px;margin:0 auto}
+.empty strong{color:var(--red)}
+.footer{text-align:center;padding:20px 20px 48px;color:var(--muted);font-size:0.82rem}
+
+@media(max-width:768px){
+  .nav-inner{flex-direction:column;height:auto;padding:8px 12px;gap:6px}
+  .grid{grid-template-columns:1fr}.content{padding:0 16px}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="/">食物真相百科</a>
+    <div class="nav-links">
+      <a href="/">🏠</a>
+      <a th:each="c : ${categories}" th:href="@{/category/{name}(name=${c})}"
+         th:text="${catEmoji.getOrDefault(c,'📂')}">分类</a>
+      <a href="/all-foods">📋</a><a href="/recipes">🍳</a><a href="/shopping">🛒</a>
+    </div>
+    <div class="nav-user" sec:authorize="!isAuthenticated()"><a href="/login">登录</a></div>
+    <div class="nav-user" sec:authorize="isAuthenticated()">
+      <a href="/favorites">⭐收藏</a><span sec:authentication="name">用户</span>
+      <form method="post" action="/logout" style="display:inline"><button type="submit" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:0.8rem">退出</button></form>
+    </div>
+    <form class="nav-search" action="/search" method="get">
+      <input type="text" name="q" th:value="${query}" placeholder="搜索..."><button>🔍</button>
+    </form>
+  </div>
+</nav>
+
+<div class="page-header">
+  <h1 th:text="'🔍 搜索：' + ${query}">搜索</h1>
+  <p class="count" th:text="${#lists.size(foods) + #lists.size(recipes) + #lists.size(shops)} + ' 条结果'">0 条</p>
+</div>
+
+<div class="content">
+  <div class="empty" th:if="${#lists.isEmpty(foods) && #lists.isEmpty(recipes) && #lists.isEmpty(shops)}">
+    <p th:if="${!query.isBlank()}">没有找到与「<strong th:text="${query}">xx</strong>」相关的任何内容，换个关键词试试。</p>
+  </div>
+
+  <!-- Foods -->
+  <th:block th:if="${!#lists.isEmpty(foods)}">
+    <div class="sec-title">🥝 食物百科 (<span th:text="${#lists.size(foods)}">0</span>)</div>
+    <div class="grid">
+      <a class="card" th:each="f : ${foods}" th:href="@{/foods/{id}(id=${f.id})}">
+        <div class="c-top">
+          <span class="c-emoji" th:text="${foodEmoji.getOrDefault(f.name,'📋')}">🥝</span>
+          <span class="c-tag" th:class="${f.tag} == '伪健康' ? 'fh' : 'wa'" th:text="${f.tag}">标签</span>
+        </div>
+        <div class="c-name" th:text="${f.name}">食物名</div>
+        <div class="c-desc" th:if="${!#lists.isEmpty(f.myths)}" th:text="'❌ ' + ${f.myths[0].myth}">误区</div>
+        <div class="c-footer"><span th:text="${#lists.size(f.myths)} + ' 条真相'">X条</span><span class="c-cta">查看 →</span></div>
+      </a>
+    </div>
+  </th:block>
+
+  <!-- Recipes -->
+  <th:block th:if="${!#lists.isEmpty(recipes)}">
+    <div class="sec-title">🍳 菜谱 (<span th:text="${#lists.size(recipes)}">0</span>)</div>
+    <div class="grid">
+      <a class="card" th:each="r : ${recipes}" th:href="@{/recipes/{id}(id=${r.id})}">
+        <div class="c-top"><span class="c-tag recipe" th:text="${r.category}">分类</span></div>
+        <div class="c-name" th:text="${r.name}">菜名</div>
+        <div class="c-desc" th:text="${r.description}">描述</div>
+        <div class="c-footer"><span th:text="${r.difficulty} + ' · ' + ${r.cookingTime}">难度</span><span class="c-cta">查看 →</span></div>
+      </a>
+    </div>
+  </th:block>
+
+  <!-- Shopping -->
+  <th:block th:if="${!#lists.isEmpty(shops)}">
+    <div class="sec-title">🛒 买菜指南 (<span th:text="${#lists.size(shops)}">0</span>)</div>
+    <div class="grid">
+      <a class="card" th:each="s : ${shops}" th:href="@{/shopping/{id}(id=${s.id})}">
+        <div class="c-top"><span class="c-tag shop" th:text="${s.category}">分类</span></div>
+        <div class="c-name" th:text="${s.name}">食材名</div>
+        <div class="c-desc" th:text="${#strings.length(s.howToPick) > 80 ? #strings.substring(s.howToPick, 0, 80) + '...' : s.howToPick}">挑选</div>
+        <div class="c-footer"><span th:text="${s.season}">季节</span><span class="c-cta">查看 →</span></div>
+      </a>
+    </div>
+  </th:block>
+</div>
+
+<footer class="footer">食物真相百科 · 用科学证据说话</footer>
+</body>
+</html>
